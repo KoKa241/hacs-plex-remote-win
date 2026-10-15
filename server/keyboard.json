@@ -1,0 +1,30 @@
+{
+  "name": "Plex PC Remote keyboard",
+  "idmatcher": "Keyboard.*",
+  "mapping": {
+    "Up": "up",
+    "Down": "down",
+    "Left": "left",
+    "Right": "right",
+    "Return|Enter": "enter",
+    "Esc|Escape|Backspace": "back",
+    "F1": "play_pause",
+    "F2": "play",
+    "F3": "pause",
+    "F4": "stop",
+    "F5": "seek_backward",
+    "F6": "seek_forward",
+    "F7": "skip_previous",
+    "F8": "skip_next",
+    "F9": "home",
+    "F10": "decrease_volume",
+    "F11": "increase_volume",
+    "F12": "mpv:cycle mute",
+    "Ctrl\\+F1": "toggle_subtitles",
+    "Ctrl\\+F2": "cycle_audio",
+    "Ctrl\\+F3": "toggle_fullscreen",
+    "Ctrl\\+F4": "info",
+    "Space": "play_pause",
+    "(?:Shift\\+)?([A-Z0-9.])": "%1"
+  }
+}

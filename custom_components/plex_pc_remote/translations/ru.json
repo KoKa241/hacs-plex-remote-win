@@ -1,0 +1,42 @@
+{
+  "title": "Plex PC Remote",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Plex PC Remote",
+        "description": "Адрес Windows-сервера и токен из server/config.json.",
+        "data": {
+          "url": "URL сервера",
+          "token": "API token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Plex PC Remote",
+        "description": "Адрес Windows-сервера и токен из server/config.json.",
+        "data": {
+          "url": "URL сервера",
+          "token": "API token"
+        }
+      },
+      "reconfigure": {
+        "title": "Plex PC Remote",
+        "description": "Адрес Windows-сервера и токен из server/config.json.",
+        "data": {
+          "url": "URL сервера",
+          "token": "API token"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Неверный токен",
+      "cannot_connect": "Не удалось подключиться к серверу",
+      "invalid_url": "Укажите http(s)://адрес:порт"
+    },
+    "abort": {
+      "already_configured": "Устройство уже добавлено",
+      "wrong_device": "Это другой сервер",
+      "reauth_successful": "Настройки обновлены",
+      "reconfigure_successful": "Настройки обновлены"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "title": "Plex PC Remote",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Plex PC Remote",
+        "description": "Windows server URL and token from server/config.json.",
+        "data": {
+          "url": "Server URL",
+          "token": "API token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Plex PC Remote",
+        "description": "Windows server URL and token from server/config.json.",
+        "data": {
+          "url": "Server URL",
+          "token": "API token"
+        }
+      },
+      "reconfigure": {
+        "title": "Plex PC Remote",
+        "description": "Windows server URL and token from server/config.json.",
+        "data": {
+          "url": "Server URL",
+          "token": "API token"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid token",
+      "cannot_connect": "Cannot connect to server",
+      "invalid_url": "Use http(s)://host:port"
+    },
+    "abort": {
+      "already_configured": "Device already configured",
+      "wrong_device": "This is a different server",
+      "reauth_successful": "Settings updated",
+      "reconfigure_successful": "Settings updated"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+# Merge into configuration.yaml; do not create a second homekit: key.
+# Alternatively configure HomeKit Bridge in the UI (see README).
+homekit:
+  - name: Plex PC TV
+    mode: accessory
+    port: 21065
+    filter:
+      include_entities:
+        - media_player.plex_pc_tv

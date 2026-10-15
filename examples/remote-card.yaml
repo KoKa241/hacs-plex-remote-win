@@ -1,0 +1,396 @@
+{
+  "type": "vertical-stack",
+  "cards": [
+    {
+      "type": "tile",
+      "entity": "media_player.plex_pc_tv",
+      "name": "Plex · компьютер",
+      "icon": "mdi:plex"
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "Питание",
+          "icon": "mdi:power",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "toggle"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "↑",
+          "icon": "mdi:chevron-up",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "up"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Главная",
+          "icon": "mdi:home",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "home"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "←",
+          "icon": "mdi:chevron-left",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "left"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "OK",
+          "icon": "mdi:checkbox-blank-circle-outline",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "select"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "→",
+          "icon": "mdi:chevron-right",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "right"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "Назад · Esc",
+          "icon": "mdi:keyboard-esc",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "back"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "↓",
+          "icon": "mdi:chevron-down",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "down"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Информация",
+          "icon": "mdi:information-outline",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "info"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "−10 секунд",
+          "icon": "mdi:rewind-10",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "seek_backward"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Пуск / Пауза",
+          "icon": "mdi:play-pause",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "play_pause"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "+10 секунд",
+          "icon": "mdi:fast-forward-10",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "seek_forward"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "Предыдущий",
+          "icon": "mdi:skip-previous",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "previous"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Стоп",
+          "icon": "mdi:stop",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "stop"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Следующий",
+          "icon": "mdi:skip-next",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "next"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "Тише",
+          "icon": "mdi:volume-minus",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "volume_down"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Без звука",
+          "icon": "mdi:volume-mute",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "mute"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Громче",
+          "icon": "mdi:volume-plus",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "volume_up"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "square": false,
+      "cards": [
+        {
+          "type": "button",
+          "name": "Субтитры",
+          "icon": "mdi:subtitles",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "subtitles"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Аудиодорожка",
+          "icon": "mdi:translate",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "audio"
+            }
+          }
+        },
+        {
+          "type": "button",
+          "name": "Полный экран",
+          "icon": "mdi:fullscreen",
+          "show_state": false,
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "remote.send_command",
+            "target": {
+              "entity_id": "remote.plex_pc_remote"
+            },
+            "data": {
+              "command": "fullscreen"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "scripts": {"test": "node --test tests/frontend.test.cjs"},
+  "devDependencies": {"happy-dom": "^20.0.0"}
+}

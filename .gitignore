@@ -6,3 +6,4 @@ server/config.json
 *.log
 .DS_Store
 .ruff_cache/
+node_modules/

@@ -1,0 +1,4 @@
+type: custom:plex-pc-remote-card
+# Optional for multiple PCs:
+# entity: remote.plex_pc_remote
+# name: Plex Living Room

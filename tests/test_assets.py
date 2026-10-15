@@ -19,7 +19,7 @@ def test_card_commands_exist():
 def test_bindings_cover_server_keys():
     mapping = json.loads((ROOT / "server/keyboard.json").read_text())["mapping"]
     names = {0x26: "Up", 0x28: "Down", 0x25: "Left", 0x27: "Right", 0x0D: "Return", 0x1B: "Esc"}
-    names.update({0x6F + i: f"F{i}" for i in range(1, 13)})
+    names.update({0x6F + i: f"F{i}" for i in range(13, 25)})
     for command, keys in KEYS.items():
         name = ("Ctrl+" if len(keys) > 1 else "") + names[keys[-1]]
         matches = [action for pattern, action in mapping.items() if re.fullmatch(pattern, name)]

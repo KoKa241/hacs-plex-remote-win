@@ -10,22 +10,22 @@ KEYS = {
     "right": (0x27,),
     "select": (0x0D,),
     "back": (0x1B,),
-    "play_pause": (0x70,),
-    "play": (0x71,),
-    "pause": (0x72,),
-    "stop": (0x73,),
-    "seek_backward": (0x74,),
-    "seek_forward": (0x75,),
-    "previous": (0x76,),
-    "next": (0x77,),
-    "home": (0x78,),
-    "volume_down": (0x79,),
-    "volume_up": (0x7A,),
-    "mute": (0x7B,),
-    "subtitles": (0x11, 0x70),
-    "audio": (0x11, 0x71),
-    "fullscreen": (0x11, 0x72),
-    "info": (0x11, 0x73),
+    "play_pause": (0x7C,),
+    "play": (0x7D,),
+    "pause": (0x7E,),
+    "stop": (0x7F,),
+    "seek_backward": (0x80,),
+    "seek_forward": (0x81,),
+    "previous": (0x82,),
+    "next": (0x83,),
+    "home": (0x84,),
+    "volume_down": (0x85,),
+    "volume_up": (0x86,),
+    "mute": (0x87,),
+    "subtitles": (0x11, 0x7C),
+    "audio": (0x11, 0x7D),
+    "fullscreen": (0x11, 0x7E),
+    "info": (0x11, 0x7F),
 }
 COMMANDS = frozenset(KEYS) | {"turn_on", "turn_off", "toggle", "focus"}
 
@@ -48,7 +48,8 @@ class Controller:
         return {
             "server_id": self.server_id,
             "running": self.backend.running(),
-            "version": "1.0.0",
+            "version": "1.1.0",
+            "input_ready": self.backend.input_ready(),
             "commands": sorted(COMMANDS),
         }
 
@@ -65,6 +66,8 @@ class Controller:
             else:
                 if not self.backend.running():
                     raise ControlError("Plex is not running")
+                if command != "focus" and not self.backend.input_ready():
+                    raise ControlError("Restart Plex HTPC to load the updated remote keyboard profile")
                 self.backend.focus()
                 if command != "focus":
                     self.backend.press(KEYS[command])

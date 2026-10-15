@@ -1,0 +1,11 @@
+expose_homekit:
+  name: Добавить телевизор в Apple Home
+  description: Создать отдельный HomeKit TV аксессуар. Уже существующий аксессуар повторно не создаётся. Требуются права администратора.
+  fields:
+    entity_id:
+      name: Телевизор Plex
+      required: true
+      selector:
+        entity:
+          integration: plex_pc_remote
+          domain: media_player

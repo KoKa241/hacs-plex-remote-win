@@ -11,6 +11,7 @@ import win32con
 import win32gui
 import win32process
 
+from .bindings import bindings_match, install_bindings
 from .control import ControlError
 
 
@@ -19,6 +20,17 @@ class WindowsBackend:
         self.executable = Path(executable).resolve(strict=True)
         if self.executable.name.lower() != "plex htpc.exe":
             raise ValueError("Select Plex HTPC.exe, not Plex Media Server or another app")
+
+        self.binding_path = Path(os.environ["LOCALAPPDATA"]) / "Plex HTPC" / "inputmaps" / "keyboard.json"
+        install_bindings(self.binding_path)
+
+    def input_ready(self):
+        if not bindings_match(self.binding_path):
+            return False
+        # File mtime survives server restarts and setup.py updates. Plex caches its
+        # map at launch; a process older than the installed profile must restart.
+        installed_at = self.binding_path.stat().st_mtime
+        return all(p.create_time() >= installed_at for p in self.processes())
 
     def processes(self):
         expected = os.path.normcase(str(self.executable))

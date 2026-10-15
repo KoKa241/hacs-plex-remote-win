@@ -1,0 +1,9 @@
+# Compatibility suite: Python 3.13. Separate from the Windows server environment.
+homeassistant==2025.6.3
+home-assistant-frontend==20250531.4
+HAP-python==4.9.2
+PyQRCode==1.2.1
+base36==0.1.1
+pycares>=4.9,<5
+pytest>=8,<10
+pytest-asyncio>=1,<2

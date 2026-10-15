@@ -4,10 +4,10 @@ import argparse
 import json
 import os
 import secrets
-import shutil
-import time
 import uuid
 from pathlib import Path
+
+from .bindings import install_bindings
 
 
 def main():
@@ -34,9 +34,7 @@ def main():
     folder = Path(os.environ["LOCALAPPDATA"]) / "Plex HTPC" / "inputmaps"
     folder.mkdir(parents=True, exist_ok=True)
     mapping = folder / "keyboard.json"
-    if mapping.exists():
-        shutil.copy2(mapping, mapping.with_name(f"keyboard.backup-{time.time_ns()}.json.bak"))
-    shutil.copy2(Path(__file__).with_name("keyboard.json"), mapping)
+    install_bindings(mapping)
     print(f"Config: {target.resolve()}\nBindings: {mapping}\nRestart Plex HTPC. Token is in config.json.")
 
 

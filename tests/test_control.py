@@ -11,6 +11,9 @@ class FakeBackend:
         self.calls = []
         self.focus_allowed = True
 
+    def input_ready(self):
+        return True
+
     def running(self):
         return self.on
 

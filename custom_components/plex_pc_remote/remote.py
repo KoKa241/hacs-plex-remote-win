@@ -4,7 +4,9 @@ import asyncio
 
 from homeassistant.components.remote import RemoteEntity
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 
+from .const import DOMAIN
 from .entity import PlexEntity
 
 
@@ -21,6 +23,18 @@ class PlexRemote(PlexEntity, RemoteEntity):
     @property
     def is_on(self):
         return self.coordinator.data["running"]
+
+    @property
+    def extra_state_attributes(self):
+        registry = er.async_get(self.hass)
+        return {
+            "integration": DOMAIN,
+            "tv_entity_id": registry.async_get_entity_id(
+                "media_player", DOMAIN, f"{self.coordinator.server_id}_tv"
+            ),
+            "server_version": self.coordinator.data.get("version"),
+            "input_ready": self.coordinator.data.get("input_ready"),
+        }
 
     async def async_turn_on(self, **kwargs):
         await self.coordinator.command("turn_on")

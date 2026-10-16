@@ -134,3 +134,8 @@ class WindowsBackend:
         finally:
             for key, flags in reversed(pressed):
                 win32api.keybd_event(key, 0, flags | win32con.KEYEVENTF_KEYUP, 0)
+
+    def desktop_input(self, action):
+        from .native_input import send
+
+        send(action)

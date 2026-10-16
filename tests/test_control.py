@@ -11,6 +11,9 @@ class FakeBackend:
         self.calls = []
         self.focus_allowed = True
 
+    def desktop_input(self, action):
+        self.calls.append(action.model_dump())
+
     def input_ready(self):
         return True
 

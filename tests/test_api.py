@@ -13,7 +13,9 @@ def client():
     return TestClient(create_app(Controller(FakeBackend(), "test-pc"), TOKEN))
 
 
-@pytest.mark.parametrize("path,method", [("/api/status", "get"), ("/api/command", "post")])
+@pytest.mark.parametrize(
+    "path,method", [("/api/status", "get"), ("/api/command", "post"), ("/api/input", "post")]
+)
 def test_auth_required(client, path, method):
     assert getattr(client, method)(path).status_code == 401
     assert getattr(client, method)(path, headers={"Authorization": "Bearer wrong"}).status_code == 401

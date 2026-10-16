@@ -33,6 +33,7 @@ class PlexRemote(PlexEntity, RemoteEntity):
                 "media_player", DOMAIN, f"{self.coordinator.server_id}_tv"
             ),
             "server_version": self.coordinator.data.get("version"),
+            "desktop_input": self.coordinator.data.get("desktop_input", False),
             "input_ready": self.coordinator.data.get("input_ready"),
         }
 

@@ -47,3 +47,14 @@ class PlexCoordinator(DataUpdateCoordinator):
                 # A rejected action does not mean Plex was turned off.
                 raise HomeAssistantError(str(exc)) from exc
             self.async_set_updated_data(data)
+
+    async def desktop_input(self, payload):
+        async with self.command_lock:
+            if not self.data.get("desktop_input"):
+                raise HomeAssistantError("Update the Windows server to 1.2.0")
+            try:
+                data = await self.api.input(payload)
+                if data.get("server_id") != self.server_id:
+                    raise ApiError("Server identity changed")
+            except ApiError as exc:
+                raise HomeAssistantError(str(exc)) from exc

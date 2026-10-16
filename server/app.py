@@ -12,6 +12,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .control import COMMANDS, ControlError, Controller
+from .desktop import DesktopAction
 
 
 class Command(BaseModel):
@@ -43,6 +44,17 @@ def create_app(controller, token):
         except Exception as exc:
             logging.getLogger(__name__).exception("Plex command failed")
             raise HTTPException(503, "Windows action failed; check server log") from exc
+
+    @app.post("/api/input", dependencies=[Depends(authenticate)])
+    def desktop_input(body: DesktopAction):
+        try:
+            return controller.desktop_input(body)
+        except (ControlError, UnicodeError) as exc:
+            raise HTTPException(409, str(exc)) from exc
+        except Exception as exc:
+            # Do not log request bodies (typed text may contain private data).
+            logging.getLogger(__name__).error("Desktop input failed: %s", type(exc).__name__)
+            raise HTTPException(503, "Windows input failed") from exc
 
     return app
 

@@ -163,3 +163,56 @@ async def test_homekit_native_flow_creates_tv_in_accessory_mode(hass):
     assert result["type"] == "create_entry"
     assert result["data"]["mode"] == "accessory"
     assert result["data"]["filter"]["include_entities"] == ["media_player.renamed_tv"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "allowed,platform,online,error",
+    [
+        (True, "plex_pc_remote", True, None),
+        (False, "plex_pc_remote", True, "unauthorized"),
+        (True, "other", True, "invalid_entity"),
+        (True, "plex_pc_remote", False, "unavailable"),
+    ],
+)
+async def test_desktop_websocket_permissions_and_routing(hass, monkeypatch, allowed, platform, online, error):
+    from custom_components.plex_pc_remote import websocket as ws
+
+    c = SimpleNamespace(last_update_success=online, desktop_input=AsyncMock())
+    entity = SimpleNamespace(platform=platform, config_entry_id="entry")
+    monkeypatch.setattr(ws.er, "async_get", lambda h: SimpleNamespace(async_get=lambda entity_id: entity))
+    hass.config_entries = SimpleNamespace(async_get_entry=lambda entry_id: SimpleNamespace(runtime_data=c))
+    connection = SimpleNamespace(
+        user=SimpleNamespace(permissions=SimpleNamespace(check_entity=Mock(return_value=allowed))),
+        send_error=Mock(),
+        send_result=Mock(),
+    )
+    msg = {
+        "id": 1,
+        "type": "plex_pc_remote/input",
+        "entity_id": "remote.pc",
+        "payload": {"kind": "text", "text": "Я🙂"},
+    }
+    await ws.handle_input(hass, connection, msg)
+    if error:
+        assert connection.send_error.call_args.args[1] == error
+        c.desktop_input.assert_not_awaited()
+    else:
+        c.desktop_input.assert_awaited_once_with(msg["payload"])
+        connection.send_result.assert_called_once_with(1)
+
+
+def test_desktop_websocket_schema_rejects_extra_keys():
+    import voluptuous as vol
+
+    from custom_components.plex_pc_remote.websocket import websocket_input
+
+    with pytest.raises(vol.Invalid):
+        websocket_input._ws_schema(
+            {
+                "id": 1,
+                "type": "plex_pc_remote/input",
+                "entity_id": "remote.pc",
+                "payload": {"kind": "text", "text": "hello", "execute": "cmd"},
+            }
+        )

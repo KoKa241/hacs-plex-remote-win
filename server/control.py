@@ -48,7 +48,8 @@ class Controller:
         return {
             "server_id": self.server_id,
             "running": self.backend.running(),
-            "version": "1.1.0",
+            "version": "1.2.0",
+            "desktop_input": True,
             "input_ready": self.backend.input_ready(),
             "commands": sorted(COMMANDS),
         }
@@ -72,3 +73,10 @@ class Controller:
                 if command != "focus":
                     self.backend.press(KEYS[command])
             return self._status()
+
+    def desktop_input(self, action):
+        # Desktop actions intentionally target the currently active Windows app.
+        # Do not call focus(), start(), or apply Plex's inputmap here.
+        with self.lock:
+            self.backend.desktop_input(action)
+        return {"ok": True, "server_id": self.server_id}

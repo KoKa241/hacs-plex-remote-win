@@ -62,3 +62,23 @@ class PlexAPI:
                 return data
         except (TimeoutError, aiohttp.ClientError, ValueError) as exc:
             raise ApiError("Cannot communicate with Plex PC Remote") from exc
+
+    async def input(self, payload):
+        try:
+            async with self.session.post(
+                self.url + "/api/input",
+                json=payload,
+                headers={"Authorization": f"Bearer {self.token}"},
+                timeout=aiohttp.ClientTimeout(total=5),
+                allow_redirects=False,
+            ) as response:
+                if response.status == 401:
+                    raise InvalidAuth("Invalid API token")
+                if response.status != 200:
+                    raise ApiError(f"Windows input failed (HTTP {response.status})")
+                data = await response.json()
+                if not isinstance(data, dict) or data.get("ok") is not True:
+                    raise ApiError("Invalid desktop input response")
+                return data
+        except (TimeoutError, aiohttp.ClientError, ValueError) as exc:
+            raise ApiError("Desktop input was not confirmed; not retried automatically") from exc

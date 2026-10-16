@@ -7,10 +7,12 @@ from .const import DOMAIN, PLATFORMS
 from .coordinator import PlexCoordinator
 from .frontend import async_remove_panel, async_setup_frontend
 from .homekit import async_register_homekit_service
+from .websocket import async_register_input
 
 
 async def async_setup(hass, config):
     async_register_homekit_service(hass)
+    async_register_input(hass)
     return True
 
 

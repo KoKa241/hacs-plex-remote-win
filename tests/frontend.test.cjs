@@ -76,3 +76,50 @@ test('panel mounts the same complete remote', () => {
   const panel=window.document.createElement('plex-pc-remote-panel');window.document.body.append(panel);
   assert.ok(panel.shadowRoot.querySelector('plex-pc-remote-card'));
 });
+
+function pointer(pad,type,id,x,y){pad[type]({pointerId:id,clientX:x,clientY:y,button:0,preventDefault(){}});}
+async function flushPad(pad){clearTimeout(pad.timer);pad.timer=null;await pad.drain();}
+function padFixture(){
+  const f=mount();f.ws=[];f.hass.callWS=async m=>f.ws.push(m);
+  f.hass.states['remote.actual_name'].attributes.desktop_input=true;f.element.hass=f.hass;
+  f.pad=f.element.shadowRoot.querySelector('plex-touchpad');return f;
+}
+test('Plex down swipe emits down once, never OK or desktop input',async()=>{
+  const {pad,calls,ws}=padFixture();pointer(pad,'down',1,50,50);pointer(pad,'move',1,52,90);pointer(pad,'move',1,52,160);pointer(pad,'up',1,52,160);await flushPad(pad);
+  assert.deepEqual(calls.map(x=>x[2].command),['down']);assert.equal(ws.length,0);
+});
+test('Plex tap = select; two-finger tap = back',async()=>{
+  const {pad,calls}=padFixture();pointer(pad,'down',1,50,50);pointer(pad,'up',1,51,51);
+  pointer(pad,'down',1,50,50);pointer(pad,'down',2,80,50);pointer(pad,'up',1,50,50);pointer(pad,'up',2,80,50);await flushPad(pad);
+  assert.deepEqual(calls.map(x=>x[2].command),['select','back']);
+});
+test('sub-threshold drag never becomes accidental OK; cancelled gestures send nothing',async()=>{
+  const {pad,calls}=padFixture();pointer(pad,'down',1,0,0);pointer(pad,'move',1,20,0);pointer(pad,'up',1,20,0);
+  pointer(pad,'down',1,0,0);pad.cancel();pointer(pad,'up',1,0,0);await flushPad(pad);assert.equal(calls.length,0);
+});
+test('mouse sends relative movement while Plex is off and does not focus Plex',async()=>{
+  const {pad,hass,element,ws,calls}=padFixture();hass.states['remote.actual_name'].state='off';element.hass=hass;pad.setMode('mouse');
+  pointer(pad,'down',1,50,50);pointer(pad,'move',1,70,60);pointer(pad,'up',1,70,60);await flushPad(pad);
+  assert.equal(calls.length,0);assert.equal(ws[0].payload.kind,'move');assert.equal(ws[0].payload.dx,30);assert.equal(ws[0].payload.dy,15);
+});
+test('mouse two-finger scroll does not click or move cursor',async()=>{
+  const {pad,ws}=padFixture();pad.setMode('mouse');pointer(pad,'down',1,50,50);pointer(pad,'down',2,80,50);
+  pointer(pad,'move',1,50,100);pointer(pad,'move',2,80,100);pointer(pad,'up',1,50,100);pointer(pad,'up',2,80,100);await flushPad(pad);
+  assert.ok(ws.length>0);assert.ok(ws.every(m=>m.payload.kind==='scroll'));
+});
+test('changing mode drops unsent actions',async()=>{
+  const {pad,calls,ws}=padFixture();pointer(pad,'down',1,0,0);pointer(pad,'move',1,60,0);pad.setMode('mouse');await flushPad(pad);assert.equal(calls.length+ws.length,0);
+});
+test('Unicode text sent exactly once and cleared only after acknowledgement',async()=>{
+  const {pad,ws}=padFixture();pad.setMode('mouse');const box=pad.shadowRoot.querySelector('textarea');box.value='Привет 🙂';
+  const pending=pad.sendText();await flushPad(pad);await pending;
+  assert.equal(ws.length,1);assert.equal(ws[0].payload.text,'Привет 🙂');assert.equal(box.value,'');
+});
+test('failed text retained and never automatically retried',async()=>{
+  const {pad,hass}=padFixture();let attempts=0;hass.callWS=async()=>{attempts++;throw new Error('blocked');};pad.setMode('mouse');const box=pad.shadowRoot.querySelector('textarea');box.value='text';
+  const pending=pad.sendText();await flushPad(pad);await pending;assert.equal(attempts,1);assert.equal(box.value,'text');assert.match(pad.shadowRoot.querySelector('.notice').textContent,/blocked/);
+});
+test('shortcuts are explicit desktop packets, not Plex keys',async()=>{
+  const {pad,ws}=padFixture();pad.setMode('mouse');
+  for(const key of ['escape','alt_f4','task_manager']){pad.shadowRoot.querySelector(`[data-shortcut="${key}"]`).click();await flushPad(pad);assert.equal(ws.at(-1).payload.key,key);}
+});

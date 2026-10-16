@@ -123,3 +123,22 @@ test('shortcuts are explicit desktop packets, not Plex keys',async()=>{
   const {pad,ws}=padFixture();pad.setMode('mouse');
   for(const key of ['escape','alt_f4','task_manager']){pad.shadowRoot.querySelector(`[data-shortcut="${key}"]`).click();await flushPad(pad);assert.equal(ws.at(-1).payload.key,key);}
 });
+
+test('original button remote remains visible without expanding a section',()=>{
+  const {element}=mount();
+  assert.equal(element.shadowRoot.querySelector('details'),null);
+  assert.ok(element.shadowRoot.querySelector('.keys [data-command="up"]'));
+});
+test('Plex pad provides independent controls and can power on a closed Plex',async()=>{
+  const {pad,hass,calls,element}=padFixture();
+  for(const command of ['back','volume_down','mute','volume_up','play_pause','stop','fullscreen','toggle']){
+    const b=pad.shadowRoot.querySelector(`[data-plex="${command}"]`);
+    assert.equal(b.disabled,false);b.click();await flushPad(pad);
+    assert.equal(calls.at(-1)[2].command,command);
+  }
+  hass.states['remote.actual_name'].state='off';element.hass=hass;
+  assert.equal(pad.shadowRoot.querySelector('[data-plex="back"]').disabled,true);
+  const power=pad.shadowRoot.querySelector('[data-plex="toggle"]');
+  assert.equal(power.disabled,false);power.click();await flushPad(pad);
+  assert.equal(calls.at(-1)[2].command,'toggle');
+});

@@ -75,7 +75,17 @@ class PlexAPI:
                 if response.status == 401:
                     raise InvalidAuth("Invalid API token")
                 if response.status != 200:
-                    raise ApiError(f"Windows input failed (HTTP {response.status})")
+                    detail = ""
+                    if response.status == 409:
+                        try:
+                            body = await response.json()
+                            if isinstance(body, dict) and isinstance(body.get("detail"), str):
+                                detail = ": " + body["detail"][:500]
+                        except (ValueError, aiohttp.ClientError):
+                            pass
+                    if response.status == 404:
+                        detail = ": update and restart the Python server on Windows"
+                    raise ApiError(f"Windows input failed (HTTP {response.status}){detail}")
                 data = await response.json()
                 if not isinstance(data, dict) or data.get("ok") is not True:
                     raise ApiError("Invalid desktop input response")

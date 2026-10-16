@@ -48,7 +48,7 @@ class Controller:
         return {
             "server_id": self.server_id,
             "running": self.backend.running(),
-            "version": "1.2.0",
+            "version": "1.2.1",
             "desktop_input": True,
             "input_ready": self.backend.input_ready(),
             "commands": sorted(COMMANDS),

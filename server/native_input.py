@@ -79,8 +79,30 @@ def packets(action):
     return result
 
 
+class Point(C.Structure):
+    _fields_ = [("x", LONG), ("y", LONG)]
+
+
+def move_cursor(user32, dx, dy):
+    user32.GetCursorPos.argtypes = [C.POINTER(Point)]
+    user32.GetCursorPos.restype = C.c_int
+    user32.SetCursorPos.argtypes = [C.c_int, C.c_int]
+    user32.SetCursorPos.restype = C.c_int
+    point = Point()
+    if not user32.GetCursorPos(C.byref(point)) or not user32.SetCursorPos(point.x + dx, point.y + dy):
+        raise ControlError(
+            "Windows cursor unavailable: run the server in the signed-in user's desktop session, "
+            "not as a background service; unlock Windows"
+        )
+
+
 def send(action):
     user32 = C.WinDLL("user32", use_last_error=True)
+    if action.kind == "move":
+        move_cursor(user32, action.dx, action.dy)
+        return
+    user32.GetAsyncKeyState.argtypes = [C.c_int]
+    user32.GetAsyncKeyState.restype = C.c_short
     user32.SendInput.argtypes = [C.c_uint, C.POINTER(Input), C.c_int]
     user32.SendInput.restype = C.c_uint
     if any(user32.GetAsyncKeyState(k) & 0x8000 for k in (0x10, 0x11, 0x12, 0x5B, 0x5C)):

@@ -46,6 +46,7 @@ class PlexTouchpad extends HTMLElement {
       .send{width:100%;margin-top:6px}.notice:empty{display:none}[hidden]{display:none!important}
     </style>
     <div class="modes" role="group" aria-label="Режим площадки"><button data-mode="plex" aria-pressed="true">Жесты Plex</button><button data-mode="mouse" aria-pressed="false">Мышь Windows</button></div>
+    <div class="plex-controls shortcuts"></div>
     <div class="pad" tabindex="0" role="group" aria-label="Сенсорная площадка"><span></span></div>
     <p class="hint"></p><p class="notice" role="status" aria-live="polite"></p>
     <div class="desktop" hidden>
@@ -57,6 +58,9 @@ class PlexTouchpad extends HTMLElement {
     </div>`;
     for(const button of this.shadowRoot.querySelectorAll('[data-mode]')) button.addEventListener('click',()=>this.setMode(button.dataset.mode));
     for(const button of this.shadowRoot.querySelectorAll('[data-click]')) button.addEventListener('click',()=>this.desktop({kind:'click',button:button.dataset.click}));
+    const quick=[['toggle','⏻ Plex'],['back','Назад · Esc'],['home','Домой'],['volume_down','Громкость −'],['mute','Без звука'],['volume_up','Громкость +'],['seek_backward','Перемотка назад'],['play_pause','▶ / ⏸'],['seek_forward','Перемотка вперёд'],['stop','Стоп'],['fullscreen','Полный экран'],['info','Информация']];
+    for(const [command,title] of quick){const b=document.createElement('button');b.textContent=title;b.dataset.plex=command;
+      b.addEventListener('click',()=>this.plex(command));this.shadowRoot.querySelector('.plex-controls').append(b);}
     const shortcuts=[['escape','Esc'],['enter','Enter'],['backspace','⌫ Backspace'],['tab','Tab'],['delete','Delete'],['alt_tab','Alt+Tab'],['alt_f4','Закрыть · Alt+F4'],['task_manager','Диспетчер задач'],['show_desktop','Рабочий стол'],['select_all','Выделить всё'],['copy','Копировать'],['paste','Вставить']];
     for(const [key,title] of shortcuts){const b=document.createElement('button');b.textContent=title;b.dataset.shortcut=key;
       b.addEventListener('click',()=>this.desktop({kind:'shortcut',key}));this.shadowRoot.querySelector('.shortcuts').append(b);}
@@ -81,6 +85,8 @@ class PlexTouchpad extends HTMLElement {
     this.enabled=Boolean(online&&(this.mode==='mouse'?s.attributes.desktop_input===true:s.state==='on'&&s.attributes.input_ready===true));
     if(!this.enabled&&(this.points.size||this.queue.length))this.cancel();
     for(const b of this.shadowRoot.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===this.mode));
+    this.shadowRoot.querySelector('.plex-controls').hidden=this.mode!=='plex';
+    for(const b of this.shadowRoot.querySelectorAll('[data-plex]'))b.disabled=b.dataset.plex==='toggle'?!online:!this.enabled;
     this.shadowRoot.querySelector('.desktop').hidden=this.mode!=='mouse';
     this.shadowRoot.querySelector('.pad').setAttribute('aria-disabled',String(!this.enabled));
     this.shadowRoot.querySelector('.pad span').textContent=this.mode==='plex'?'↑  ←  OK  →  ↓':'Тачпад Windows';
@@ -121,7 +127,7 @@ class PlexTouchpad extends HTMLElement {
     if(this.mode==='plex')this.plex(g.multi?'back':'select');
     else this.desktop({kind:'click',button:g.multi?'right':'left'});
   }
-  plex(command){if(!this.enabled||this.mode!=='plex')return Promise.resolve(false);navigator.vibrate?.(12);return this.enqueue('plex',{command});}
+  plex(command){const online=this.hass?.states[this.entity]&&!['unavailable','unknown'].includes(this.hass.states[this.entity].state);if((command==='toggle'?!online:!this.enabled)||this.mode!=='plex')return Promise.resolve(false);navigator.vibrate?.(12);return this.enqueue('plex',{command});}
   desktop(payload){if(!this.enabled||this.mode!=='mouse')return Promise.resolve(false);return this.enqueue('desktop',payload);}
   enqueue(route,payload){
     if(this.queue.length>=16){this.shadowRoot.querySelector('.notice').textContent='Соединение не успевает. Повторите после завершения команды.';return Promise.resolve(false);}
@@ -212,8 +218,8 @@ class PlexRemoteCard extends HTMLElement {
       <section class="remote">
         <header><ha-icon icon="mdi:remote-tv"></ha-icon><div><h2>Plex пульт</h2><div class="status" aria-live="polite"></div></div></header>
         <select aria-label="Компьютер Plex"></select>
+        <div class="keys" aria-label="Кнопочный пульт Plex"></div>
         <plex-touchpad></plex-touchpad>
-        <details><summary style="cursor:pointer;padding:12px 0">Кнопки пульта Plex</summary><div class="keys"></div></details>
         <p class="message warning" role="status"></p>
         <p class="message error" role="alert" hidden></p>
         <button class="homekit"><ha-icon icon="mdi:home-automation"></ha-icon><span>Добавить в Apple Home</span></button>

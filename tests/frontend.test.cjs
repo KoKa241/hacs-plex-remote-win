@@ -166,3 +166,24 @@ test('Windows key and shortcuts belong to the mouse keyboard section',async()=>{
   win.click();await flushPad(pad);
   assert.equal(ws.at(-1).payload.key,'windows');
 });
+
+test('Plex gesture tab restores swipes, taps and quick controls without showing mouse',async()=>{
+  const {element,calls,hass}=mount();
+  const root=element.shadowRoot;
+  root.querySelector('[data-tab="gestures"]').click();
+  assert.equal(root.querySelector('#gestures-panel').hidden,false);
+  assert.equal(root.querySelector('#plex-panel').hidden,true);
+  assert.equal(root.querySelector('#mouse-panel').hidden,true);
+  const pad=root.querySelector('[plex-only]');
+  assert.equal(pad.mode,'plex');
+  pointer(pad,'down',1,50,50);pointer(pad,'move',1,50,100);pointer(pad,'up',1,50,100);
+  await flushPad(pad);assert.equal(calls.at(-1)[2].command,'down');
+  pointer(pad,'down',1,50,50);pointer(pad,'up',1,50,50);
+  await flushPad(pad);assert.equal(calls.at(-1)[2].command,'select');
+  pad.shadowRoot.querySelector('[data-plex="back"]').click();
+  await flushPad(pad);assert.equal(calls.at(-1)[2].command,'back');
+  pad.plex('up');root.querySelector('[data-tab="mouse"]').click();
+  assert.equal(pad.queue.length,0);
+  hass.states['remote.actual_name'].state='unavailable';element.hass=hass;
+  assert.equal(pad.enabled,false);
+});

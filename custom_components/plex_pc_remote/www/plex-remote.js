@@ -44,7 +44,7 @@ class PlexTouchpad extends HTMLElement {
       background:var(--card-background-color,#fff);color:inherit;border-radius:12px;padding:10px;margin-top:10px}
       .shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}.shortcuts button{font-size:12px}
       .send{width:100%;margin-top:6px}.notice:empty{display:none}[hidden]{display:none!important}
-      :host([mouse-only]) .modes,:host([mouse-only]) .plex-controls{display:none!important}
+      :host([plex-only]) .modes,:host([mouse-only]) .modes,:host([mouse-only]) .plex-controls{display:none!important}
     </style>
     <div class="modes" role="group" aria-label="Режим площадки"><button data-mode="plex" aria-pressed="true">Жесты Plex</button><button data-mode="mouse" aria-pressed="false">Мышь Windows</button></div>
     <div class="plex-controls shortcuts"></div>
@@ -227,10 +227,12 @@ class PlexRemoteCard extends HTMLElement {
         <select aria-label="Компьютер Plex"></select>
         <div class="tabs" role="tablist" aria-label="Управление компьютером">
           <button id="plex-tab" role="tab" data-tab="plex" aria-controls="plex-panel" aria-selected="true">Пульт Plex</button>
+          <button id="gestures-tab" role="tab" data-tab="gestures" aria-controls="gestures-panel" aria-selected="false" tabindex="-1">Трекпад Plex</button>
           <button id="mouse-tab" role="tab" data-tab="mouse" aria-controls="mouse-panel" aria-selected="false" tabindex="-1">Мышь и клавиатура</button>
         </div>
         <div id="plex-panel" role="tabpanel" aria-labelledby="plex-tab"><div class="keys" aria-label="Кнопочный пульт Plex"></div></div>
         <div id="mouse-panel" role="tabpanel" aria-labelledby="mouse-tab" hidden><plex-touchpad mouse-only></plex-touchpad></div>
+        <div id="gestures-panel" role="tabpanel" aria-labelledby="gestures-tab" hidden><plex-touchpad plex-only></plex-touchpad></div>
         <p class="message warning" role="status"></p>
         <p class="message error" role="alert" hidden></p>
         <button class="homekit"><ha-icon icon="mdi:home-automation"></ha-icon><span>Добавить в Apple Home</span></button>
@@ -244,7 +246,8 @@ class PlexRemoteCard extends HTMLElement {
       button.addEventListener('keydown', event => {
         if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
           event.preventDefault();
-          const next = event.key === 'Home' ? 'plex' : event.key === 'End' ? 'mouse' : this._tab === 'plex' ? 'mouse' : 'plex';
+          const tabs = ['plex', 'gestures', 'mouse'];
+          const next = event.key === 'Home' ? 'plex' : event.key === 'End' ? 'mouse' : tabs[(tabs.indexOf(this._tab) + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
           this._switchTab(next);
           this.shadowRoot.querySelector(`[data-tab="${next}"]`).focus();
         }
@@ -273,7 +276,7 @@ class PlexRemoteCard extends HTMLElement {
   }
   _switchTab(tab) {
     this._tab = tab;
-    this.shadowRoot.querySelector('plex-touchpad').cancel();
+    for (const pad of this.shadowRoot.querySelectorAll('plex-touchpad')) pad.cancel();
     for (const button of this.shadowRoot.querySelectorAll('[data-tab]')) {
       const selected = button.dataset.tab === tab;
       button.setAttribute('aria-selected', String(selected));
@@ -281,6 +284,7 @@ class PlexRemoteCard extends HTMLElement {
     }
     this.shadowRoot.querySelector('#plex-panel').hidden = tab !== 'plex';
     this.shadowRoot.querySelector('#mouse-panel').hidden = tab !== 'mouse';
+    this.shadowRoot.querySelector('#gestures-panel').hidden = tab !== 'gestures';
   }
   _state() { return this._hass?.states[this._selected]; }
   _update() {
@@ -305,7 +309,7 @@ class PlexRemoteCard extends HTMLElement {
     select.value = this._selected;
     select.hidden = entities.length < 2 || Boolean(this._config.entity);
     select.disabled = this._busy;
-    this.shadowRoot.querySelector("plex-touchpad").configure(this._hass, this._selected);
+    for (const pad of this.shadowRoot.querySelectorAll("plex-touchpad")) pad.configure(this._hass, this._selected);
     const state = this._state();
     const available = state && !["unavailable", "unknown"].includes(state.state);
     const on = state?.state === "on";

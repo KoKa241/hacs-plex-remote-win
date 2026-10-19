@@ -9,7 +9,7 @@ from homeassistant.components.http import StaticPathConfig
 from .const import DOMAIN
 
 URL = "/plex_pc_remote/plex-remote.js"
-MODULE_URL = URL + "?v=1.3.0"
+MODULE_URL = URL + "?v=1.3.1"
 PANEL_PATH = "plex-pc-remote"
 
 

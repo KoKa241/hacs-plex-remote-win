@@ -44,6 +44,7 @@ class PlexTouchpad extends HTMLElement {
       background:var(--card-background-color,#fff);color:inherit;border-radius:12px;padding:10px;margin-top:10px}
       .shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}.shortcuts button{font-size:12px}
       .send{width:100%;margin-top:6px}.notice:empty{display:none}[hidden]{display:none!important}
+      :host([mouse-only]) .modes,:host([mouse-only]) .plex-controls{display:none!important}
     </style>
     <div class="modes" role="group" aria-label="Режим площадки"><button data-mode="plex" aria-pressed="true">Жесты Plex</button><button data-mode="mouse" aria-pressed="false">Мышь Windows</button></div>
     <div class="plex-controls shortcuts"></div>
@@ -61,9 +62,9 @@ class PlexTouchpad extends HTMLElement {
     const quick=[['toggle','⏻ Plex'],['back','Назад · Esc'],['home','Домой'],['volume_down','Громкость −'],['mute','Без звука'],['volume_up','Громкость +'],['seek_backward','Перемотка назад'],['play_pause','▶ / ⏸'],['seek_forward','Перемотка вперёд'],['stop','Стоп'],['fullscreen','Полный экран'],['info','Информация']];
     for(const [command,title] of quick){const b=document.createElement('button');b.textContent=title;b.dataset.plex=command;
       b.addEventListener('click',()=>this.plex(command));this.shadowRoot.querySelector('.plex-controls').append(b);}
-    const shortcuts=[['escape','Esc'],['enter','Enter'],['backspace','⌫ Backspace'],['tab','Tab'],['delete','Delete'],['alt_tab','Alt+Tab'],['alt_f4','Закрыть · Alt+F4'],['task_manager','Диспетчер задач'],['show_desktop','Рабочий стол'],['select_all','Выделить всё'],['copy','Копировать'],['paste','Вставить']];
+    const shortcuts=[['windows','⊞ Windows'],['escape','Esc'],['enter','Enter'],['backspace','⌫ Backspace'],['tab','Tab'],['delete','Delete'],['alt_tab','Alt+Tab'],['alt_f4','Закрыть · Alt+F4'],['task_manager','Диспетчер задач'],['show_desktop','Рабочий стол'],['select_all','Выделить всё'],['copy','Копировать'],['paste','Вставить']];
     for(const [key,title] of shortcuts){const b=document.createElement('button');b.textContent=title;b.dataset.shortcut=key;
-      b.addEventListener('click',()=>this.desktop({kind:'shortcut',key}));this.shadowRoot.querySelector('.shortcuts').append(b);}
+      b.addEventListener('click',()=>this.desktop({kind:'shortcut',key}));this.shadowRoot.querySelector('.desktop .shortcuts').append(b);}
     this.shadowRoot.querySelector('.send').addEventListener('click',()=>this.sendText());
     const pad=this.shadowRoot.querySelector('.pad');
     pad.addEventListener('pointerdown',e=>this.down(e));pad.addEventListener('pointermove',e=>this.move(e));
@@ -168,6 +169,7 @@ class PlexRemoteCard extends HTMLElement {
     this._config = {};
     this._busy = false;
     this._selected = "";
+    this._tab = "plex";
   }
   static getStubConfig() { return {}; }
   setConfig(config) {
@@ -188,12 +190,15 @@ class PlexRemoteCard extends HTMLElement {
         :host { display:block; color:var(--primary-text-color, #20252b); }
         * { box-sizing:border-box; }
         .remote { padding:20px; background:var(--ha-card-background,var(--card-background-color,#fff));
-          border:1px solid var(--divider-color,#dedede); border-radius:24px; }
+          border:1px solid var(--divider-color,#dedede); border-radius:24px; box-shadow:0 8px 28px #00000008; }
         header {display:flex; align-items:center; gap:12px; margin-bottom:16px;}
         header ha-icon {color:#c78b00; --mdc-icon-size:32px;}
         h2 {font-size:22px; margin:0;} .status {font-size:13px; opacity:.75; margin-top:4px;}
         select {width:100%; padding:10px; margin-bottom:14px; border-radius:10px;
           background:var(--secondary-background-color,#f4f5f6); color:inherit; border:1px solid var(--divider-color,#ddd);}
+        .tabs {display:flex;gap:4px;padding:4px;margin-bottom:20px;border-radius:16px;background:var(--secondary-background-color,#f1f3f5);}
+        .tabs button {flex:1;min-height:46px;font-size:13px;font-weight:600;background:transparent;padding:8px;}
+        .tabs button[aria-selected=true] {background:var(--card-background-color,#fff);box-shadow:0 2px 8px #00000012;color:var(--primary-text-color,#20252b);}
         .keys {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px;
           grid-template-areas:'power home info' '. up .' 'left ok right' 'back down fullscreen'
           'rewind playpause forward' 'previous stop next' 'quieter mute louder' 'subtitles audio focus';}
@@ -207,6 +212,8 @@ class PlexRemoteCard extends HTMLElement {
         button:focus-visible {outline:3px solid var(--primary-color,#168ada); outline-offset:2px;}
         button:disabled {opacity:.35; cursor:default; transform:none;}
         [data-command=select], [data-command=play_pause] {background:#e5ad30; color:#16191e;}
+        [data-command=up],[data-command=down],[data-command=left],[data-command=right] {border-radius:20px;background:var(--divider-color,#e8ebef);}
+        [data-command=select] {border-radius:24px;min-height:76px;}
         [data-command=toggle] {color:var(--error-color,#bc283d);}
         .message {font-size:13px; line-height:1.5; margin:12px 0 0; overflow-wrap:anywhere;}
         .error {color:var(--error-color,#bc283d);}
@@ -218,14 +225,31 @@ class PlexRemoteCard extends HTMLElement {
       <section class="remote">
         <header><ha-icon icon="mdi:remote-tv"></ha-icon><div><h2>Plex пульт</h2><div class="status" aria-live="polite"></div></div></header>
         <select aria-label="Компьютер Plex"></select>
-        <div class="keys" aria-label="Кнопочный пульт Plex"></div>
-        <plex-touchpad></plex-touchpad>
+        <div class="tabs" role="tablist" aria-label="Управление компьютером">
+          <button id="plex-tab" role="tab" data-tab="plex" aria-controls="plex-panel" aria-selected="true">Пульт Plex</button>
+          <button id="mouse-tab" role="tab" data-tab="mouse" aria-controls="mouse-panel" aria-selected="false" tabindex="-1">Мышь и клавиатура</button>
+        </div>
+        <div id="plex-panel" role="tabpanel" aria-labelledby="plex-tab"><div class="keys" aria-label="Кнопочный пульт Plex"></div></div>
+        <div id="mouse-panel" role="tabpanel" aria-labelledby="mouse-tab" hidden><plex-touchpad mouse-only></plex-touchpad></div>
         <p class="message warning" role="status"></p>
         <p class="message error" role="alert" hidden></p>
         <button class="homekit"><ha-icon icon="mdi:home-automation"></ha-icon><span>Добавить в Apple Home</span></button>
         <p class="message pairing" role="status" hidden></p>
         <p class="note">Питание запускает или закрывает только Plex. Компьютер остаётся включённым.</p>
       </section>`;
+    const pad = this.shadowRoot.querySelector('plex-touchpad');
+    pad.setMode('mouse');
+    for (const button of this.shadowRoot.querySelectorAll('[data-tab]')) {
+      button.addEventListener('click', () => this._switchTab(button.dataset.tab));
+      button.addEventListener('keydown', event => {
+        if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
+          event.preventDefault();
+          const next = event.key === 'Home' ? 'plex' : event.key === 'End' ? 'mouse' : this._tab === 'plex' ? 'mouse' : 'plex';
+          this._switchTab(next);
+          this.shadowRoot.querySelector(`[data-tab="${next}"]`).focus();
+        }
+      });
+    }
     const grid = this.shadowRoot.querySelector(".keys");
     for (const [command, title, icon, area] of CONTROLS) {
       const button = document.createElement("button");
@@ -246,6 +270,17 @@ class PlexRemoteCard extends HTMLElement {
       this._update();
     });
     this.shadowRoot.querySelector(".homekit").addEventListener("click", () => this._homekit());
+  }
+  _switchTab(tab) {
+    this._tab = tab;
+    this.shadowRoot.querySelector('plex-touchpad').cancel();
+    for (const button of this.shadowRoot.querySelectorAll('[data-tab]')) {
+      const selected = button.dataset.tab === tab;
+      button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    }
+    this.shadowRoot.querySelector('#plex-panel').hidden = tab !== 'plex';
+    this.shadowRoot.querySelector('#mouse-panel').hidden = tab !== 'mouse';
   }
   _state() { return this._hass?.states[this._selected]; }
   _update() {

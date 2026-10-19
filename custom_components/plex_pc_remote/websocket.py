@@ -30,6 +30,7 @@ PAYLOAD = vol.Any(
                 "task_manager",
                 "alt_tab",
                 "show_desktop",
+                "windows",
                 "select_all",
                 "copy",
                 "paste",

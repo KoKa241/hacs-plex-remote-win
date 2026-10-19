@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 SHORTCUTS = {
+    "windows": (0x5B,),
     "escape": (0x1B,),
     "enter": (0x0D,),
     "backspace": (0x08,),
@@ -48,6 +49,7 @@ class Text(Action):
 class Shortcut(Action):
     kind: Literal["shortcut"]
     key: Literal[
+        "windows",
         "escape",
         "enter",
         "backspace",

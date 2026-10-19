@@ -104,3 +104,9 @@ def test_cursor_moves_from_current_position_and_reports_desktop_failure():
     with pytest.raises(ControlError):
         move_cursor(user32, 10, 10)
     user32.SetCursorPos.assert_not_called()
+
+
+def test_windows_key_is_pressed_and_released():
+    events = packets(ACTION_ADAPTER.validate_python({"kind": "shortcut", "key": "windows"}))
+    assert [e.ki.wVk for e in events] == [0x5B, 0x5B]
+    assert [e.ki.dwFlags for e in events] == [1, 3]

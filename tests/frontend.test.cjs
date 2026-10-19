@@ -82,7 +82,7 @@ async function flushPad(pad){clearTimeout(pad.timer);pad.timer=null;await pad.dr
 function padFixture(){
   const f=mount();f.ws=[];f.hass.callWS=async m=>f.ws.push(m);
   f.hass.states['remote.actual_name'].attributes.desktop_input=true;f.element.hass=f.hass;
-  f.pad=f.element.shadowRoot.querySelector('plex-touchpad');return f;
+  f.pad=f.element.shadowRoot.querySelector('plex-touchpad');f.pad.setMode('plex');return f;
 }
 test('Plex down swipe emits down once, never OK or desktop input',async()=>{
   const {pad,calls,ws}=padFixture();pointer(pad,'down',1,50,50);pointer(pad,'move',1,52,90);pointer(pad,'move',1,52,160);pointer(pad,'up',1,52,160);await flushPad(pad);
@@ -141,4 +141,28 @@ test('Plex pad provides independent controls and can power on a closed Plex',asy
   const power=pad.shadowRoot.querySelector('[data-plex="toggle"]');
   assert.equal(power.disabled,false);power.click();await flushPad(pad);
   assert.equal(calls.at(-1)[2].command,'toggle');
+});
+
+test('tabs show only one control surface and clear pending pointer input',async()=>{
+  const {element,hass}=mount();
+  const root=element.shadowRoot,pad=root.querySelector('plex-touchpad');
+  hass.states['remote.actual_name'].attributes.desktop_input=true;
+  element.hass=hass;
+  assert.equal(root.querySelector('#plex-panel').hidden,false);
+  assert.equal(root.querySelector('#mouse-panel').hidden,true);
+  assert.equal(pad.mode,'mouse');
+  root.querySelector('[data-tab="mouse"]').click();
+  assert.equal(root.querySelector('#plex-panel').hidden,true);
+  assert.equal(root.querySelector('#mouse-panel').hidden,false);
+  pad.enqueue('desktop',{kind:'move',dx:10,dy:5});
+  root.querySelector('[data-tab="plex"]').click();
+  assert.equal(pad.queue.length,0);
+  assert.equal(root.querySelector('#mouse-panel').hidden,true);
+});
+test('Windows key and shortcuts belong to the mouse keyboard section',async()=>{
+  const {pad,ws}=padFixture();pad.setMode('mouse');
+  const win=pad.shadowRoot.querySelector('.desktop [data-shortcut="windows"]');
+  assert.ok(win);assert.equal(pad.shadowRoot.querySelector('.plex-controls [data-shortcut]'),null);
+  win.click();await flushPad(pad);
+  assert.equal(ws.at(-1).payload.key,'windows');
 });

@@ -38,6 +38,12 @@ class PlexTouchpad extends HTMLElement {
       .pad{height:225px;border:2px solid var(--divider-color,#d3d7dc);border-radius:20px;display:flex;align-items:center;
       justify-content:center;text-align:center;padding:24px;touch-action:none;user-select:none;-webkit-user-select:none;
       background:radial-gradient(circle,var(--divider-color,#ddd) 1px,transparent 1px);background-size:18px 18px}
+      @media (max-width:600px), (pointer:coarse){
+        .pad{height:clamp(320px,48vh,520px);height:clamp(320px,48svh,520px)}
+      }
+      @media (orientation:landscape) and (max-height:600px){
+        .pad{height:clamp(225px,55vh,360px);height:clamp(225px,55svh,360px)}
+      }
       .pad[aria-disabled=true]{opacity:.4}.pad span{background:var(--card-background-color,#fff);border-radius:12px;padding:12px;pointer-events:none;line-height:1.6}
       .hint,.notice{font-size:12px;line-height:1.5;margin:8px 0}.notice{color:var(--error-color,#b92333)}
       textarea{font:inherit;font-size:16px;width:100%;min-height:85px;resize:vertical;border:1px solid var(--divider-color,#ccc);

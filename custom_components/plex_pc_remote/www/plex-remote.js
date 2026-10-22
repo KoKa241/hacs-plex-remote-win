@@ -51,11 +51,28 @@ class PlexTouchpad extends HTMLElement {
       .shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}.shortcuts button{font-size:12px}
       .send{width:100%;margin-top:6px}.notice:empty{display:none}[hidden]{display:none!important}
       :host([plex-only]) .modes,:host([mouse-only]) .modes,:host([mouse-only]) .plex-controls{display:none!important}
+      .pad{position:relative;overflow:hidden;border:1px solid var(--divider-color,#d3d7dc);border-radius:28px;
+        background:radial-gradient(ellipse at 50% 40%,#e5ad3014,transparent 70%),var(--secondary-background-color,#f4f5f7);
+        box-shadow:inset 0 1px 5px #00000008;transition:border-color .15s,box-shadow .15s}
+      .pad span{background:transparent;color:var(--secondary-text-color,#65707c);font-size:18px;letter-spacing:5px}
+      .pad[data-feedback] {border-color:#e5ad30;box-shadow:inset 0 0 0 2px #e5ad3026}
+      .pad[data-feedback] span{opacity:0}
+      .gesture-feedback{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+        font-size:54px;font-weight:500;color:var(--primary-text-color,#20252b);opacity:0}
+      .pad[data-feedback] .gesture-feedback{opacity:1}
+      .plex-controls{gap:8px;margin-top:18px}
+      .plex-controls button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:62px;padding:10px 4px}
+      .plex-controls button span{font-size:11px}.plex-controls ha-icon{--mdc-icon-size:24px}
+      [data-plex=play_pause]{background:#e5ad30;color:#16191e}
+      [data-plex=toggle]{color:var(--error-color,#bc283d)}
+      .hint{color:var(--secondary-text-color,#65707c);text-align:center;margin:12px 0}
+      button:active:not(:disabled){transform:scale(.97)}
+      @media(prefers-reduced-motion:reduce){.pad{transition:none}button:active:not(:disabled){transform:none}}
     </style>
     <div class="modes" role="group" aria-label="Режим площадки"><button data-mode="plex" aria-pressed="true">Жесты Plex</button><button data-mode="mouse" aria-pressed="false">Мышь Windows</button></div>
-    <div class="plex-controls shortcuts"></div>
-    <div class="pad" tabindex="0" role="group" aria-label="Сенсорная площадка"><span></span></div>
+    <div class="pad" tabindex="0" role="group" aria-label="Сенсорная площадка"><span></span><b class="gesture-feedback" aria-hidden="true"></b></div>
     <p class="hint"></p><p class="notice" role="status" aria-live="polite"></p>
+    <div class="plex-controls shortcuts"></div>
     <div class="desktop" hidden>
       <div class="clicks"><button data-click="left">Левый клик</button><button data-click="right">Правый клик</button></div>
       <label>Текст в активное окно Windows<textarea maxlength="2000" placeholder="Введите текст и нажмите «Отправить»" aria-label="Текст в Windows"></textarea></label>
@@ -66,7 +83,9 @@ class PlexTouchpad extends HTMLElement {
     for(const button of this.shadowRoot.querySelectorAll('[data-mode]')) button.addEventListener('click',()=>this.setMode(button.dataset.mode));
     for(const button of this.shadowRoot.querySelectorAll('[data-click]')) button.addEventListener('click',()=>this.desktop({kind:'click',button:button.dataset.click}));
     const quick=[['toggle','⏻ Plex'],['back','Назад · Esc'],['home','Домой'],['volume_down','Громкость −'],['mute','Без звука'],['volume_up','Громкость +'],['seek_backward','Перемотка назад'],['play_pause','▶ / ⏸'],['seek_forward','Перемотка вперёд'],['stop','Стоп'],['fullscreen','Полный экран'],['info','Информация']];
-    for(const [command,title] of quick){const b=document.createElement('button');b.textContent=title;b.dataset.plex=command;
+    for(const [command,title] of quick){const b=document.createElement('button');b.dataset.plex=command;b.setAttribute('aria-label',title);
+      const icon=document.createElement('ha-icon');icon.setAttribute('icon',CONTROLS.find(c=>c[0]===command)[2]);
+      const label=document.createElement('span');label.textContent=title;b.append(icon,label);
       b.addEventListener('click',()=>this.plex(command));this.shadowRoot.querySelector('.plex-controls').append(b);}
     const shortcuts=[['windows','⊞ Windows'],['escape','Esc'],['enter','Enter'],['backspace','⌫ Backspace'],['tab','Tab'],['delete','Delete'],['alt_tab','Alt+Tab'],['alt_f4','Закрыть · Alt+F4'],['task_manager','Диспетчер задач'],['show_desktop','Рабочий стол'],['select_all','Выделить всё'],['copy','Копировать'],['paste','Вставить']];
     for(const [key,title] of shortcuts){const b=document.createElement('button');b.textContent=title;b.dataset.shortcut=key;
@@ -101,7 +120,7 @@ class PlexTouchpad extends HTMLElement {
       :online&&!s.attributes.desktop_input?'Для мыши обновите Windows-сервер до 1.2.0.':'Один палец — курсор · касание — клик · два пальца — прокрутка / правый клик';
     for(const b of this.shadowRoot.querySelectorAll('.desktop button'))b.disabled=!this.enabled||Boolean(this.sendingText);
   }
-  cancel(){this.points.clear();this.gesture=null;this.epoch++;clearTimeout(this.timer);this.timer=null;for(const item of this.queue)item.resolve(false);this.queue=[];}
+  cancel(){clearTimeout(this.feedbackTimer);this.feedbackTimer=null;this.shadowRoot.querySelector('.pad').removeAttribute('data-feedback');this.points.clear();this.gesture=null;this.epoch++;clearTimeout(this.timer);this.timer=null;for(const item of this.queue)item.resolve(false);this.queue=[];}
   center(){const a=[...this.points.values()];return{x:a.reduce((s,p)=>s+p.x,0)/a.length,y:a.reduce((s,p)=>s+p.y,0)/a.length};}
   down(e){
     if(!this.enabled||e.button>0)return;e.preventDefault();
@@ -134,10 +153,23 @@ class PlexTouchpad extends HTMLElement {
     if(this.mode==='plex')this.plex(g.multi?'back':'select');
     else this.desktop({kind:'click',button:g.multi?'right':'left'});
   }
-  plex(command){const online=this.hass?.states[this.entity]&&!['unavailable','unknown'].includes(this.hass.states[this.entity].state);if((command==='toggle'?!online:!this.enabled)||this.mode!=='plex')return Promise.resolve(false);navigator.vibrate?.(12);return this.enqueue('plex',{command});}
+  plex(command){const online=this.hass?.states[this.entity]&&!['unavailable','unknown'].includes(this.hass.states[this.entity].state);if((command==='toggle'?!online:!this.enabled)||this.mode!=='plex')return Promise.resolve(false);return this.enqueue('plex',{command});}
+  feedback(command){
+    // HA routes this event to Companion haptics and honours the user's settings.
+    // Fire synchronously on recognition, rather than waiting for the network.
+    this.dispatchEvent(new CustomEvent('haptic',{detail:'light',bubbles:true,composed:true}));
+    const glyph={up:'↑',down:'↓',left:'←',right:'→',select:'OK',back:'↩'}[command];
+    if(!glyph)return;
+    const pad=this.shadowRoot.querySelector('.pad');
+    pad.querySelector('.gesture-feedback').textContent=glyph;
+    pad.setAttribute('data-feedback',command);
+    clearTimeout(this.feedbackTimer);
+    this.feedbackTimer=setTimeout(()=>{this.feedbackTimer=null;pad.removeAttribute('data-feedback');},220);
+  }
   desktop(payload){if(!this.enabled||this.mode!=='mouse')return Promise.resolve(false);return this.enqueue('desktop',payload);}
   enqueue(route,payload){
     if(this.queue.length>=16){this.shadowRoot.querySelector('.notice').textContent='Соединение не успевает. Повторите после завершения команды.';return Promise.resolve(false);}
+    if(route==='plex')this.feedback(payload.command);
     const previous=this.queue.at(-1);
     if(payload.kind==='move'&&previous?.payload.kind==='move'){
       previous.payload.dx=Math.max(-500,Math.min(500,previous.payload.dx+payload.dx));
@@ -198,13 +230,13 @@ class PlexRemoteCard extends HTMLElement {
         .remote { padding:20px; background:var(--ha-card-background,var(--card-background-color,#fff));
           border:1px solid var(--divider-color,#dedede); border-radius:24px; box-shadow:0 8px 28px #00000008; }
         header {display:flex; align-items:center; gap:12px; margin-bottom:16px;}
-        header ha-icon {color:#c78b00; --mdc-icon-size:32px;}
-        h2 {font-size:22px; margin:0;} .status {font-size:13px; opacity:.75; margin-top:4px;}
+        header ha-icon {color:#c78b00; --mdc-icon-size:28px;background:#e5ad301a;border-radius:16px;padding:12px;}
+        h2 {font-size:21px;letter-spacing:-.4px; margin:0;} .status {font-size:13px; opacity:.75; margin-top:4px;}
         select {width:100%; padding:10px; margin-bottom:14px; border-radius:10px;
           background:var(--secondary-background-color,#f4f5f6); color:inherit; border:1px solid var(--divider-color,#ddd);}
         .tabs {display:flex;gap:4px;padding:4px;margin-bottom:20px;border-radius:16px;background:var(--secondary-background-color,#f1f3f5);}
         .tabs button {flex:1;min-height:46px;font-size:13px;font-weight:600;background:transparent;padding:8px;}
-        .tabs button[aria-selected=true] {background:var(--card-background-color,#fff);box-shadow:0 2px 8px #00000012;color:var(--primary-text-color,#20252b);}
+        .tabs button[aria-selected=true] {background:var(--card-background-color,#fff);border-bottom:2px solid #e5ad30;box-shadow:0 2px 8px #00000012;color:var(--primary-text-color,#20252b);}
         .keys {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px;
           grid-template-areas:'power home info' '. up .' 'left ok right' 'back down fullscreen'
           'rewind playpause forward' 'previous stop next' 'quieter mute louder' 'subtitles audio focus';}
@@ -226,6 +258,8 @@ class PlexRemoteCard extends HTMLElement {
         .homekit {width:100%; margin-top:16px; flex-direction:row; min-height:48px; gap:10px;}
         .homekit span {font-size:14px;}
         .note {font-size:12px; opacity:.7; margin:12px 0 0; line-height:1.5;}
+        @media(max-width:380px){.remote{padding:14px}.tabs button{font-size:12px;padding:8px 4px}}
+        @media(prefers-reduced-motion:reduce){button:active{transform:none}}
         [hidden] {display:none!important;}
       </style>
       <section class="remote">

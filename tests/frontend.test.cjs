@@ -187,3 +187,29 @@ test('Plex gesture tab restores swipes, taps and quick controls without showing 
   hass.states['remote.actual_name'].state='unavailable';element.hass=hass;
   assert.equal(pad.enabled,false);
 });
+
+test('recognized Plex gestures emit one light haptic through shadow roots',async()=>{
+  const {pad,calls}=padFixture();const pulses=[];
+  const listen=e=>pulses.push(e.detail);window.addEventListener('haptic',listen);
+  try{
+    pointer(pad,'down',1,50,50);pointer(pad,'move',1,100,50);pointer(pad,'move',1,150,50);pointer(pad,'up',1,150,50);
+    assert.equal(pad.shadowRoot.querySelector('.pad').dataset.feedback,'right');
+    pointer(pad,'down',1,50,50);pointer(pad,'up',1,50,50);
+    pointer(pad,'down',1,50,50);pointer(pad,'down',2,80,50);pointer(pad,'up',1,50,50);pointer(pad,'up',2,80,50);
+    assert.deepEqual(pulses,['light','light','light']);
+    await flushPad(pad);assert.deepEqual(calls.map(x=>x[2].command),['right','select','back']);
+    pad.cancel();assert.equal(pad.shadowRoot.querySelector('.pad').hasAttribute('data-feedback'),false);
+  }finally{window.removeEventListener('haptic',listen);pad.cancel();}
+});
+test('rejected, cancelled and disabled gestures do not produce haptics',async()=>{
+  const {pad,hass}=padFixture();const pulses=[];
+  const listen=e=>pulses.push(e.detail);window.addEventListener('haptic',listen);
+  try{
+    pointer(pad,'down',1,0,0);pointer(pad,'move',1,20,0);pointer(pad,'up',1,20,0);
+    pointer(pad,'down',1,0,0);pad.cancel();pointer(pad,'up',1,0,0);
+    for(let i=0;i<16;i++)pad.plex('left');
+    pulses.length=0;assert.equal(await pad.plex('select'),false);assert.equal(pulses.length,0);
+    pad.cancel();hass.states['remote.actual_name'].state='off';pad.configure(hass,'remote.actual_name');
+    pointer(pad,'down',1,0,0);pointer(pad,'up',1,0,0);assert.equal(pulses.length,0);
+  }finally{window.removeEventListener('haptic',listen);pad.cancel();}
+});
